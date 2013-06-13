@@ -37,7 +37,10 @@ struct SDL_PrivateVideoData {
     void *buffer;
     void *window;
     void *ctx;
-    SDL_Surface surface;
+    int bordered;
+    char * title;
+    int x_w, x_h;
+    int o_w, o_h;
 };
 
 #endif /* _SDL_nullvideo_h */

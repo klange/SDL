@@ -48,6 +48,7 @@
 
 #include <toaru/window.h>
 #include <toaru/graphics.h>
+#include <toaru/decorations.h>
 
 #define TOARUVID_DRIVER_NAME "toaru"
 
@@ -63,6 +64,8 @@ static int TOARU_AllocHWSurface(_THIS, SDL_Surface *surface);
 static int TOARU_LockHWSurface(_THIS, SDL_Surface *surface);
 static void TOARU_UnlockHWSurface(_THIS, SDL_Surface *surface);
 static void TOARU_FreeHWSurface(_THIS, SDL_Surface *surface);
+
+static void TOARU_SetCaption(_THIS, const char *title, const char *icon);
 
 /* etc. */
 static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects);
@@ -124,6 +127,7 @@ static SDL_VideoDevice *TOARU_CreateDevice(int devindex)
 	device->GetWMInfo = NULL;
 	device->InitOSKeymap = TOARU_InitOSKeymap;
 	device->PumpEvents = TOARU_PumpEvents;
+	device->SetCaption = TOARU_SetCaption;
 
 	device->free = TOARU_DeleteDevice;
 
@@ -144,6 +148,7 @@ int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	vformat->BytesPerPixel = 4;
 
 	setup_windowing();
+	init_decorations();
 
 	/* We're done! */
 	return(0);
@@ -160,16 +165,45 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 	if ( this->hidden->window) {
 		fprintf(stderr, "waaat, already have a window! need to resize instead!\n");
 
-		resize_window_buffer_client(this->hidden->window, 0, 0, width, height);
+		resize_window_buffer_client(this->hidden->window, 0, 0, width + this->hidden->x_w, height + this->hidden->x_h);
 		reinit_graphics_window(this->hidden->ctx, this->hidden->window);
+
+		if (this->hidden->bordered) {
+			this->hidden->buffer = realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
+		}
+
 	} else {
 
+		if (flags & SDL_NOFRAME) {
+			fprintf(stderr, "Initializing without borders.\n");
+			this->hidden->bordered = 0;
+			this->hidden->x_h = 0;
+			this->hidden->x_w = 0;
+			this->hidden->o_h = 0;
+			this->hidden->o_w = 0;
+		} else {
+			fprintf(stderr, "Initializing with borders.\n");
+			this->hidden->bordered = 1;
+			this->hidden->x_h = decor_height();
+			this->hidden->x_w = decor_width();
+			this->hidden->o_h = decor_top_height;
+			this->hidden->o_w = decor_left_width;
+		}
+
 		fprintf(stderr, "Initializing window %dx%d (%d bpp)\n", width, height, bpp);
-		window_t * win = window_create(100, 100, width, height);
+		window_t * win = window_create(100, 100, width + this->hidden->x_w, height + this->hidden->x_h);
 		win_sane_events();
+
 		gfx_context_t * ctx = init_graphics_window_double_buffer(win);
 		this->hidden->window = (void *)win;
 		this->hidden->ctx    = (void *)ctx;
+
+		if (this->hidden->bordered) {
+			this->hidden->buffer = malloc(sizeof(uint32_t) * width * height);
+		} else {
+			this->hidden->buffer = ((gfx_context_t *)this->hidden->ctx)->backbuffer;
+		}
+
 
 		fprintf(stderr, "Window output initialized...\n");
 	}
@@ -179,7 +213,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 	this->hidden->w = current->w = width;
 	this->hidden->h = current->h = height;
 	current->pitch = current->w * (4);
-	current->pixels = ((gfx_context_t *)this->hidden->ctx)->backbuffer;
+	current->pixels = this->hidden->buffer;
 
 	/* We're done */
 	return(current);
@@ -213,13 +247,28 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 
 	int y = 0;
 	int x = 0;
-	gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
-	for (y = 0; y < ctx->height; ++y) {
-		for (x = 0; x < ctx->width; ++x) {
-			GFX(ctx, x, y) = GFX(ctx,x,y) | 0xFF000000;
+	if (this->hidden->bordered) {
+		gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
+		if (this->hidden->title) {
+			render_decorations(this->hidden->window, this->hidden->ctx, this->hidden->title);
+		} else {
+			render_decorations(this->hidden->window, this->hidden->ctx, "[SDL App]");
 		}
+		flip(this->hidden->ctx);
+		for (y = 0; y < this->hidden->h; ++y) {
+			for (x = 0; x < this->hidden->w; ++x) {
+				GFX(ctx, x + this->hidden->o_w, y + this->hidden->o_h) = ((uint32_t *)this->hidden->buffer)[y * this->hidden->w + x] | 0xFF000000;
+			}
+		}
+	} else {
+		gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
+		for (y = 0; y < ctx->height; ++y) {
+			for (x = 0; x < ctx->width; ++x) {
+				GFX(ctx, x, y) = GFX(ctx,x,y) | 0xFF000000;
+			}
+		}
+		flip(this->hidden->ctx);
 	}
-	flip(this->hidden->ctx);
 
 }
 
@@ -236,3 +285,11 @@ void TOARU_VideoQuit(_THIS)
 {
 	teardown_windowing();
 }
+
+static void TOARU_SetCaption(_THIS, const char *title, const char *icon) {
+	if (this->hidden->title) {
+		free(this->hidden->title);
+	}
+	this->hidden->title = strdup(title);
+}
+

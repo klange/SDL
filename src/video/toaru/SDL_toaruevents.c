@@ -50,7 +50,14 @@ void TOARU_PumpEvents(_THIS) {
 					switch (event->command_type) {
 						case WE_RESIZED:
 							fprintf(stderr, "[SDL] Window resized, need to update buffers!\n");
-							SDL_PrivateResize(evt->width, evt->height);
+							SDL_PrivateResize(evt->width - this->hidden->x_w, evt->height - this->hidden->x_h);
+							break;
+						case WE_FOCUSCHG:
+							window = wins_get_window(evt->wid);
+							if (window) {
+								window->focused = evt->left;
+							}
+							SDL_PrivateAppActive(0, evt->left);
 							break;
 					}
 					break;
@@ -89,32 +96,31 @@ void TOARU_PumpEvents(_THIS) {
 								keysym.sym      = SDLK_DOWN;
 								SDL_PrivateKeyboard(action, &keysym);
 								break;
-							case 'a':
-							case 'b':
-							case 'c':
-							case 'd':
-							case 'e':
-							case 'f':
-							case 'g':
-							case 'h':
-							case 'i':
-							case 'j':
-							case 'k':
-							case 'l':
-							case 'm':
-							case 'n':
-							case 'o':
-							case 'p':
-							case 'q':
-							case 'r':
-							case 's':
-							case 't':
-							case 'u':
-							case 'v':
-							case 'w':
-							case 'x':
-							case 'y':
+							case KEY_ESCAPE:
+								keysym.sym      = SDLK_ESCAPE;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_BACKSPACE:
+								keysym.sym      = SDLK_BACKSPACE;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case '\t':
+								keysym.sym      = SDLK_TAB;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case '0': case '1': case '2': case '3': case '4':
+							case '5': case '6': case '7': case '8': case '9':
+							case 'a': case 'b': case 'c': case 'd': case 'e':
+							case 'f': case 'g': case 'h': case 'i': case 'j':
+							case 'k': case 'l': case 'm': case 'n': case 'o':
+							case 'p': case 'q': case 'r': case 's': case 't':
+							case 'u': case 'v': case 'w': case 'x': case 'y':
 							case 'z':
+							case ':': case ';': case '<': case '=': case '>':
+							case '?': case '@': case '[': case ']': case '\\':
+							case '^': case '_': case '`': case '.': case '/':
+							case '*': case '-': case '+': case '#': case '"':
+							case '!': case '&': case '$': case '(': case '\'':
 								keysym.sym      = (kbd->event.keycode - 'a' + SDLK_a);
 								SDL_PrivateKeyboard(action, &keysym);
 								break;
@@ -129,8 +135,8 @@ void TOARU_PumpEvents(_THIS) {
 				{
 					w_mouse_t * mouse = (w_mouse_t *)((uintptr_t)event + sizeof(wins_packet_t));
 					int i;
-					signed short x = mouse->new_x;
-					signed short y = mouse->new_y;
+					signed short x = mouse->new_x - this->hidden->o_w;
+					signed short y = mouse->new_y - this->hidden->o_h;
 					for (i = 0; i < 3; ++i) {
 						int was = mouse_state & (1 << i);
 						int is  = mouse->buttons & (1 << i);
