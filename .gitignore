@@ -8,3 +8,5 @@ libtool
 sdl.pc
 sdl-config
 Makefile
+build-deps
+include/SDL_config.h
