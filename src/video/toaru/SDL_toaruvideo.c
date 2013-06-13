@@ -1,0 +1,238 @@
+/*
+    SDL - Simple DirectMedia Layer
+    Copyright (C) 1997-2012 Sam Lantinga
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+    Sam Lantinga
+    slouken@libsdl.org
+*/
+#include "SDL_config.h"
+
+/* Dummy SDL video driver implementation; this is just enough to make an
+ *  SDL-based application THINK it's got a working video driver, for
+ *  applications that call SDL_Init(SDL_INIT_VIDEO) when they don't need it,
+ *  and also for use as a collection of stubs when porting SDL to a new
+ *  platform for which you haven't yet written a valid video driver.
+ *
+ * This is also a great way to determine bottlenecks: if you think that SDL
+ *  is a performance problem for a given platform, enable this driver, and
+ *  then see if your application runs faster without video overhead.
+ *
+ * Initial work by Ryan C. Gordon (icculus@icculus.org). A good portion
+ *  of this was cut-and-pasted from Stephane Peter's work in the AAlib
+ *  SDL video driver.  Renamed to "TOARU" by Kevin Lange.
+ */
+
+#include "SDL_video.h"
+#include "SDL_mouse.h"
+#include "../SDL_sysvideo.h"
+#include "../SDL_pixels_c.h"
+#include "../../events/SDL_events_c.h"
+
+#include "SDL_toaruvideo.h"
+#include "SDL_toaruevents_c.h"
+#include "SDL_toarumouse_c.h"
+
+#include <toaru/window.h>
+#include <toaru/graphics.h>
+
+#define TOARUVID_DRIVER_NAME "toaru"
+
+/* Initialization/Query functions */
+static int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat);
+static SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags);
+static SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags);
+static int TOARU_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors);
+static void TOARU_VideoQuit(_THIS);
+
+/* Hardware surface functions */
+static int TOARU_AllocHWSurface(_THIS, SDL_Surface *surface);
+static int TOARU_LockHWSurface(_THIS, SDL_Surface *surface);
+static void TOARU_UnlockHWSurface(_THIS, SDL_Surface *surface);
+static void TOARU_FreeHWSurface(_THIS, SDL_Surface *surface);
+
+/* etc. */
+static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects);
+
+/* TOARU driver bootstrap functions */
+
+static int TOARU_Available(void)
+{
+	return 1;
+}
+
+static void TOARU_DeleteDevice(SDL_VideoDevice *device)
+{
+	SDL_free(device->hidden);
+	SDL_free(device);
+}
+
+static SDL_VideoDevice *TOARU_CreateDevice(int devindex)
+{
+	SDL_VideoDevice *device;
+
+	/* Initialize all variables that we clean on shutdown */
+	device = (SDL_VideoDevice *)SDL_malloc(sizeof(SDL_VideoDevice));
+	if ( device ) {
+		SDL_memset(device, 0, (sizeof *device));
+		device->hidden = (struct SDL_PrivateVideoData *)
+				SDL_malloc((sizeof *device->hidden));
+	}
+	if ( (device == NULL) || (device->hidden == NULL) ) {
+		SDL_OutOfMemory();
+		if ( device ) {
+			SDL_free(device);
+		}
+		return(0);
+	}
+	SDL_memset(device->hidden, 0, (sizeof *device->hidden));
+
+	/* Set the function pointers */
+	device->VideoInit = TOARU_VideoInit;
+	device->ListModes = TOARU_ListModes;
+	device->SetVideoMode = TOARU_SetVideoMode;
+	device->CreateYUVOverlay = NULL;
+	device->SetColors = TOARU_SetColors;
+	device->UpdateRects = TOARU_UpdateRects;
+	device->VideoQuit = TOARU_VideoQuit;
+	device->AllocHWSurface = TOARU_AllocHWSurface;
+	device->CheckHWBlit = NULL;
+	device->FillHWRect = NULL;
+	device->SetHWColorKey = NULL;
+	device->SetHWAlpha = NULL;
+	device->LockHWSurface = TOARU_LockHWSurface;
+	device->UnlockHWSurface = TOARU_UnlockHWSurface;
+	device->FlipHWSurface = NULL;
+	device->FreeHWSurface = TOARU_FreeHWSurface;
+	device->SetCaption = NULL;
+	device->SetIcon = NULL;
+	device->IconifyWindow = NULL;
+	device->GrabInput = NULL;
+	device->GetWMInfo = NULL;
+	device->InitOSKeymap = TOARU_InitOSKeymap;
+	device->PumpEvents = TOARU_PumpEvents;
+
+	device->free = TOARU_DeleteDevice;
+
+	return device;
+}
+
+VideoBootStrap TOARU_bootstrap = {
+	TOARUVID_DRIVER_NAME, "SDL ToaruOS video driver",
+	TOARU_Available, TOARU_CreateDevice
+};
+
+
+int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
+{
+	fprintf(stderr, "Congratulations, you are using the とあるOS SDL Video Driver!\n");
+
+	vformat->BitsPerPixel = 32;
+	vformat->BytesPerPixel = 4;
+
+	setup_windowing();
+
+	/* We're done! */
+	return(0);
+}
+
+SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
+{
+   	 return (SDL_Rect **) -1;
+}
+
+SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
+				int width, int height, int bpp, Uint32 flags)
+{
+	if ( this->hidden->window) {
+		fprintf(stderr, "waaat, already have a window! need to resize instead!\n");
+
+		resize_window_buffer_client(this->hidden->window, 0, 0, width, height);
+		reinit_graphics_window(this->hidden->ctx, this->hidden->window);
+	} else {
+
+		fprintf(stderr, "Initializing window %dx%d (%d bpp)\n", width, height, bpp);
+		window_t * win = window_create(100, 100, width, height);
+		win_sane_events();
+		gfx_context_t * ctx = init_graphics_window_double_buffer(win);
+		this->hidden->window = (void *)win;
+		this->hidden->ctx    = (void *)ctx;
+
+		fprintf(stderr, "Window output initialized...\n");
+	}
+
+	/* Set up the new mode framebuffer */
+	current->flags = flags;
+	this->hidden->w = current->w = width;
+	this->hidden->h = current->h = height;
+	current->pitch = current->w * (4);
+	current->pixels = ((gfx_context_t *)this->hidden->ctx)->backbuffer;
+
+	/* We're done */
+	return(current);
+}
+
+/* We don't actually allow hardware surfaces other than the main one */
+static int TOARU_AllocHWSurface(_THIS, SDL_Surface *surface)
+{
+	return(-1);
+}
+static void TOARU_FreeHWSurface(_THIS, SDL_Surface *surface)
+{
+	return;
+}
+
+/* We need to wait for vertical retrace on page flipped displays */
+static int TOARU_LockHWSurface(_THIS, SDL_Surface *surface)
+{
+	return(0);
+}
+
+static void TOARU_UnlockHWSurface(_THIS, SDL_Surface *surface)
+{
+	return;
+}
+
+static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
+{
+	if (!this->hidden->window)
+		return;
+
+	int y = 0;
+	int x = 0;
+	gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
+	for (y = 0; y < ctx->height; ++y) {
+		for (x = 0; x < ctx->width; ++x) {
+			GFX(ctx, x, y) = GFX(ctx,x,y) | 0xFF000000;
+		}
+	}
+	flip(this->hidden->ctx);
+
+}
+
+int TOARU_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
+{
+	/* We don't support palettes... */
+	return(1);
+}
+
+/* Note:  If we are terminated, this could be called in the middle of
+   another SDL video routine -- notably UpdateRects.
+*/
+void TOARU_VideoQuit(_THIS)
+{
+	teardown_windowing();
+}
