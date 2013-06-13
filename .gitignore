@@ -2,3 +2,9 @@
 *.lo
 *.swp
 *.a
+build/*
+config.status
+libtool
+sdl.pc
+sdl-config
+Makefile
