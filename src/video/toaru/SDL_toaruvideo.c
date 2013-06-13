@@ -170,6 +170,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 
 		if (this->hidden->bordered) {
 			this->hidden->buffer = realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
+			this->hidden->redraw_borders = 1;
 		}
 
 	} else {
@@ -188,6 +189,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 			this->hidden->x_w = decor_width();
 			this->hidden->o_h = decor_top_height;
 			this->hidden->o_w = decor_left_width;
+			this->hidden->redraw_borders = 1;
 		}
 
 		fprintf(stderr, "Initializing window %dx%d (%d bpp)\n", width, height, bpp);
@@ -249,10 +251,13 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 	int x = 0;
 	if (this->hidden->bordered) {
 		gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
-		if (this->hidden->title) {
-			render_decorations(this->hidden->window, this->hidden->ctx, this->hidden->title);
-		} else {
-			render_decorations(this->hidden->window, this->hidden->ctx, "[SDL App]");
+		if (this->hidden->redraw_borders) {
+			if (this->hidden->title) {
+				render_decorations(this->hidden->window, this->hidden->ctx, this->hidden->title);
+			} else {
+				render_decorations(this->hidden->window, this->hidden->ctx, "[SDL App]");
+			}
+			this->hidden->redraw_borders = 0;
 		}
 		flip(this->hidden->ctx);
 		for (y = 0; y < this->hidden->h; ++y) {
@@ -291,5 +296,6 @@ static void TOARU_SetCaption(_THIS, const char *title, const char *icon) {
 		free(this->hidden->title);
 	}
 	this->hidden->title = strdup(title);
+	this->hidden->redraw_borders = 1;
 }
 

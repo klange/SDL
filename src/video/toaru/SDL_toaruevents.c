@@ -57,6 +57,7 @@ void TOARU_PumpEvents(_THIS) {
 							if (window) {
 								window->focused = evt->left;
 							}
+							this->hidden->redraw_borders = 1;
 							SDL_PrivateAppActive(0, evt->left);
 							break;
 					}

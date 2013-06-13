@@ -41,6 +41,7 @@ struct SDL_PrivateVideoData {
     char * title;
     int x_w, x_h;
     int o_w, o_h;
+    int redraw_borders;
 };
 
 #endif /* _SDL_nullvideo_h */
