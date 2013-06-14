@@ -21696,7 +21696,7 @@ case "$host" in
             $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
 
             SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
-            EXTRA_LDFLAGS="$EXTRA_LDFLAGS -ltoaru"
+	    SDL_LIBS="$SDL_LIBS -ltoaru -lpng15 -lz -lm -lfreetype"
         ;;
     *-*-cygwin* | *-*-mingw32*)
         ARCH=win32
