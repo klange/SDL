@@ -49,8 +49,12 @@ void TOARU_PumpEvents(_THIS) {
 					window_t * window = NULL;
 					switch (event->command_type) {
 						case WE_RESIZED:
-							fprintf(stderr, "[SDL] Window resized, need to update buffers!\n");
-							SDL_PrivateResize(evt->width - this->hidden->x_w, evt->height - this->hidden->x_h);
+							fprintf(stderr, "[SDL] Received RESIZE message from server.\n");
+							if (this->hidden->triggered_resize != 2) {
+								fprintf(stderr, "--- From a natural resize. Informing SDL.\n");
+								this->hidden->triggered_resize = 1;
+								SDL_PrivateResize(evt->width - this->hidden->x_w, evt->height - this->hidden->x_h);
+							}
 							break;
 						case WE_FOCUSCHG:
 							window = wins_get_window(evt->wid);

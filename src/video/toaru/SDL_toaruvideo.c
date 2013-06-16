@@ -149,6 +149,7 @@ int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
 
 	setup_windowing();
 	init_decorations();
+	this->hidden->triggered_resize = 0;
 
 	/* We're done! */
 	return(0);
@@ -159,20 +160,34 @@ SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
    	 return (SDL_Rect **) -1;
 }
 
+extern void wins_send_command(wid_t, int16_t, int16_t, uint16_t, uint16_t, int, int);
+
 SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 				int width, int height, int bpp, Uint32 flags)
 {
 	if ( this->hidden->window) {
-		fprintf(stderr, "waaat, already have a window! need to resize instead!\n");
+		fprintf(stderr, "Resize request to %d x %d.\n", width, height);
 
+		if (!this->hidden->triggered_resize) {
+			this->hidden->triggered_resize = 2;
+			fprintf(stderr, "Requesting window resize.\n");
+			window_t * w = (window_t *) this->hidden->window;
+			wins_send_command(w->wid, 0, 0, width + this->hidden->x_w, height + this->hidden->x_h, WC_RESIZE, 0);
+			fprintf(stderr, "Window resize request completed.\n");
+		} else {
+			this->hidden->triggered_resize = 0;
+		}
+
+		fprintf(stderr, "Resizing client window buffer...\n");
 		resize_window_buffer_client(this->hidden->window, 0, 0, width + this->hidden->x_w, height + this->hidden->x_h);
+
+		fprintf(stderr, "Reinitializing graphics context...\n");
 		reinit_graphics_window(this->hidden->ctx, this->hidden->window);
 
 		if (this->hidden->bordered) {
 			this->hidden->buffer = realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
 			this->hidden->redraw_borders = 1;
 		}
-
 	} else {
 
 		if (flags & SDL_NOFRAME) {
