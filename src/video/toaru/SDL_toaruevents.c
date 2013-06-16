@@ -54,6 +54,8 @@ void TOARU_PumpEvents(_THIS) {
 								fprintf(stderr, "--- From a natural resize. Informing SDL.\n");
 								this->hidden->triggered_resize = 1;
 								SDL_PrivateResize(evt->width - this->hidden->x_w, evt->height - this->hidden->x_h);
+							} else {
+								this->hidden->triggered_resize = 0;
 							}
 							break;
 						case WE_FOCUSCHG:
