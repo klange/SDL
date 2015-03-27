@@ -139,15 +139,13 @@ static SDL_VideoDevice *TOARU_CreateDevice(int devindex)
 }
 
 VideoBootStrap TOARU_bootstrap = {
-	TOARUVID_DRIVER_NAME, "SDL ToaruOS video driver",
+	TOARUVID_DRIVER_NAME, "SDL ToaruOS (Yutani) video driver",
 	TOARU_Available, TOARU_CreateDevice
 };
 
 
 int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
-	fprintf(stderr, "Congratulations, you are using the とあるOS SDL Video Driver!\n");
-
 	vformat->BitsPerPixel = 32;
 	vformat->BytesPerPixel = 4;
 
