@@ -163,32 +163,35 @@ SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
 SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 				int width, int height, int bpp, Uint32 flags)
 {
-#if 0
 	if ( this->hidden->window) {
 		fprintf(stderr, "Resize request to %d x %d.\n", width, height);
 
 		if (!this->hidden->triggered_resize) {
+			yutani_window_t * w = (yutani_window_t *) this->hidden->window;
 			this->hidden->triggered_resize = 2;
 			fprintf(stderr, "Requesting window resize.\n");
-			window_t * w = (window_t *) this->hidden->window;
-			wins_send_command(w->wid, 0, 0, width + this->hidden->x_w, height + this->hidden->x_h, WC_RESIZE, 0);
-			fprintf(stderr, "Window resize request completed.\n");
+			yutani_window_resize(this->hidden->yctx, w, width + this->hidden->x_w, height + this->hidden->x_h);
+
+			yutani_msg_t * m = yutani_wait_for(this->hidden->yctx, YUTANI_MSG_RESIZE_OFFER);
+			struct yutani_msg_window_resize * wr = (void*)m->data;
+			width = wr->width - this->hidden->x_w;
+			height = wr->height - this->hidden->x_h;
+			free(m);
 		} else {
 			this->hidden->triggered_resize = 0;
 		}
 
-		fprintf(stderr, "Resizing client window buffer...\n");
-		resize_window_buffer_client(this->hidden->window, 0, 0, width + this->hidden->x_w, height + this->hidden->x_h);
+		yutani_window_resize_accept(this->hidden->yctx, this->hidden->window, width + this->hidden->x_w, height + this->hidden->x_h);
 
 		fprintf(stderr, "Reinitializing graphics context...\n");
-		reinit_graphics_window(this->hidden->ctx, this->hidden->window);
+		reinit_graphics_yutani(this->hidden->ctx, this->hidden->window);
 
 		if (this->hidden->bordered) {
 			this->hidden->buffer = realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
 			this->hidden->redraw_borders = 1;
 		}
+		yutani_window_resize_done(this->hidden->yctx, this->hidden->window);
 	} else {
-#endif
 
 		if (flags & SDL_NOFRAME) {
 			fprintf(stderr, "Initializing without borders.\n");
@@ -223,9 +226,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 
 
 		fprintf(stderr, "Window output initialized...\n");
-#if 0
 	}
-#endif
 
 	/* Set up the new mode framebuffer */
 	current->flags = flags;

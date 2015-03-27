@@ -49,7 +49,28 @@ void TOARU_PumpEvents(_THIS) {
 				}
 				break;
 			case YUTANI_MSG_WINDOW_FOCUS_CHANGE:
+				{
+					struct yutani_msg_window_focus_change * fc = (void*)m->data;
+					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)fc->wid);
+					if (w == this->hidden->window) {
+						w->focused = fc->focused;
+						this->hidden->redraw_borders = 1;
+						SDL_PrivateAppActive(0, fc->focused);
+					}
+				}
+				break;
 			case YUTANI_MSG_RESIZE_OFFER:
+				{
+					struct yutani_msg_window_resize * wr = (void*)m->data;
+					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)wr->wid);
+					if (w == this->hidden->window) {
+						if (this->hidden->triggered_resize != 2) {
+							this->hidden->triggered_resize = 1;
+							SDL_PrivateResize(wr->width - this->hidden->x_w, wr->height - this->hidden->x_h);
+						}
+					}
+				}
+				break;
 			case YUTANI_MSG_WINDOW_MOUSE_EVENT:
 			case YUTANI_MSG_SESSION_END:
 				fprintf(stderr, "[sdl-toaru] Need to implement: %u\n", (unsigned int)m->type);
