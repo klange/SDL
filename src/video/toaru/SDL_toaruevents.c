@@ -37,6 +37,21 @@ static SDLMod modstate = KMOD_NONE;
 
 int mouse_state = 0;
 
+static SDLMod make_mod(unsigned int m) {
+	SDLMod ret = KMOD_NONE;
+
+	if (m & KEY_MOD_LEFT_CTRL)   ret |= KMOD_LCTRL;
+	if (m & KEY_MOD_LEFT_SHIFT)  ret |= KMOD_LSHIFT;
+	if (m & KEY_MOD_LEFT_ALT)    ret |= KMOD_LALT;
+	if (m & KEY_MOD_LEFT_SUPER)  ret |= KMOD_LMETA;
+	if (m & KEY_MOD_RIGHT_CTRL)  ret |= KMOD_RCTRL;
+	if (m & KEY_MOD_RIGHT_SHIFT) ret |= KMOD_RSHIFT;
+	if (m & KEY_MOD_RIGHT_ALT)   ret |= KMOD_RALT;
+	if (m & KEY_MOD_RIGHT_SUPER) ret |= KMOD_RMETA;
+
+	return ret;
+}
+
 void TOARU_PumpEvents(_THIS) {
 	yutani_msg_t * m;
 	do {
@@ -47,6 +62,71 @@ void TOARU_PumpEvents(_THIS) {
 		switch (m->type) {
 			case YUTANI_MSG_KEY_EVENT:
 				{
+					struct yutani_msg_key_event * ke = (void*)m->data;
+					if (ke->event.keycode) {
+						SDL_keysym keysym;
+						int action = ke->event.action == KEY_ACTION_DOWN ? SDL_PRESSED : SDL_RELEASED;
+						keysym.scancode = ke->event.keycode;
+						keysym.unicode  = 0;
+						keysym.mod      = make_mod(ke->event.modifiers); /* TODO */
+						switch (ke->event.keycode) {
+							case '\n':
+								keysym.sym      = SDLK_RETURN;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case ' ':
+								keysym.sym      = SDLK_SPACE;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_ARROW_UP:
+								keysym.sym      = SDLK_UP;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_ARROW_LEFT:
+								keysym.sym      = SDLK_LEFT;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_ARROW_RIGHT:
+								keysym.sym      = SDLK_RIGHT;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_ARROW_DOWN:
+								keysym.sym      = SDLK_DOWN;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_ESCAPE:
+								keysym.sym      = SDLK_ESCAPE;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_BACKSPACE:
+								keysym.sym      = SDLK_BACKSPACE;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case '\t':
+								keysym.sym      = SDLK_TAB;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case '0': case '1': case '2': case '3': case '4':
+							case '5': case '6': case '7': case '8': case '9':
+							case 'a': case 'b': case 'c': case 'd': case 'e':
+							case 'f': case 'g': case 'h': case 'i': case 'j':
+							case 'k': case 'l': case 'm': case 'n': case 'o':
+							case 'p': case 'q': case 'r': case 's': case 't':
+							case 'u': case 'v': case 'w': case 'x': case 'y':
+							case 'z':
+							case ':': case ';': case '<': case '=': case '>':
+							case '?': case '@': case '[': case ']': case '\\':
+							case '^': case '_': case '`': case '.': case '/':
+							case '*': case '-': case '+': case '#': case '"':
+							case '!': case '&': case '$': case '(': case '\'':
+								keysym.sym      = (ke->event.keycode - 'a' + SDLK_a);
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							default:
+								fprintf(stderr, "[SDL] Key press: %d ('%c')\n", ke->event.keycode, ke->event.key);
+								break;
+						}
+					}
 				}
 				break;
 			case YUTANI_MSG_WINDOW_FOCUS_CHANGE:
