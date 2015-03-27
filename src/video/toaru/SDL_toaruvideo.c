@@ -46,7 +46,7 @@
 #include "SDL_toaruevents_c.h"
 #include "SDL_toarumouse_c.h"
 
-#include <toaru/window.h>
+#include <toaru/yutani.h>
 #include <toaru/graphics.h>
 #include <toaru/decorations.h>
 
@@ -147,7 +147,7 @@ int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	vformat->BitsPerPixel = 32;
 	vformat->BytesPerPixel = 4;
 
-	setup_windowing();
+	this->hidden->yctx = yutani_init();
 	init_decorations();
 	this->hidden->triggered_resize = 0;
 
@@ -160,11 +160,10 @@ SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
    	 return (SDL_Rect **) -1;
 }
 
-extern void wins_send_command(wid_t, int16_t, int16_t, uint16_t, uint16_t, int, int);
-
 SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 				int width, int height, int bpp, Uint32 flags)
 {
+#if 0
 	if ( this->hidden->window) {
 		fprintf(stderr, "Resize request to %d x %d.\n", width, height);
 
@@ -189,6 +188,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 			this->hidden->redraw_borders = 1;
 		}
 	} else {
+#endif
 
 		if (flags & SDL_NOFRAME) {
 			fprintf(stderr, "Initializing without borders.\n");
@@ -208,10 +208,10 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		}
 
 		fprintf(stderr, "Initializing window %dx%d (%d bpp)\n", width, height, bpp);
-		window_t * win = window_create(100, 100, width + this->hidden->x_w, height + this->hidden->x_h);
-		win_sane_events();
 
-		gfx_context_t * ctx = init_graphics_window_double_buffer(win);
+		yutani_window_t * win = yutani_window_create(this->hidden->yctx, width + this->hidden->x_w, height + this->hidden->x_h);
+
+		gfx_context_t * ctx = init_graphics_yutani_double_buffer(win);
 		this->hidden->window = (void *)win;
 		this->hidden->ctx    = (void *)ctx;
 
@@ -223,7 +223,9 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 
 
 		fprintf(stderr, "Window output initialized...\n");
+#if 0
 	}
+#endif
 
 	/* Set up the new mode framebuffer */
 	current->flags = flags;
@@ -289,6 +291,7 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 		}
 		flip(this->hidden->ctx);
 	}
+	yutani_flip(this->hidden->yctx, this->hidden->window);
 
 }
 
@@ -303,7 +306,7 @@ int TOARU_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
 */
 void TOARU_VideoQuit(_THIS)
 {
-	teardown_windowing();
+	/* XXX close windows */
 }
 
 static void TOARU_SetCaption(_THIS, const char *title, const char *icon) {

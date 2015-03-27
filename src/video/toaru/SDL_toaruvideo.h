@@ -29,14 +29,16 @@
 /* Hidden "this" pointer for the video functions */
 #define _THIS	SDL_VideoDevice *this
 
+#include <toaru/yutani.h>
 
 /* Private display data */
 
 struct SDL_PrivateVideoData {
+    yutani_t * yctx;
     int w, h;
-    void *buffer;
-    void *window;
-    void *ctx;
+    void * buffer;
+    void * window;
+    void * ctx;
     int bordered;
     char * title;
     int x_w, x_h;
