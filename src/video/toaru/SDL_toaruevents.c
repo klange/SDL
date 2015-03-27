@@ -106,6 +106,14 @@ void TOARU_PumpEvents(_THIS) {
 								keysym.sym      = SDLK_TAB;
 								SDL_PrivateKeyboard(action, &keysym);
 								break;
+							case KEY_LEFT_CTRL:
+								keysym.sym      = SDLK_LCTRL;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
+							case KEY_LEFT_SHIFT:
+								keysym.sym      = SDLK_LSHIFT;
+								SDL_PrivateKeyboard(action, &keysym);
+								break;
 							case '0': case '1': case '2': case '3': case '4':
 							case '5': case '6': case '7': case '8': case '9':
 							case 'a': case 'b': case 'c': case 'd': case 'e':
