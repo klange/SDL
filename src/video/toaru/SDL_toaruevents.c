@@ -29,6 +29,7 @@
 #include "SDL_toaruevents_c.h"
 
 #include <toaru/yutani.h>
+#include <toaru/decorations.h>
 #include <toaru/kbd.h>
 
 static SDLKey keymap[256];
@@ -72,6 +73,15 @@ void TOARU_PumpEvents(_THIS) {
 				}
 				break;
 			case YUTANI_MSG_WINDOW_MOUSE_EVENT:
+				{
+					struct yutani_msg_window_mouse_event * me = (void*)m->data;
+					if (this->hidden->bordered && decor_handle_event(this->hidden->yctx, m) == DECOR_CLOSE) {
+						SDL_PrivateQuit();
+						break;
+					}
+					/* TODO mouse events */
+				}
+				break;
 			case YUTANI_MSG_SESSION_END:
 				fprintf(stderr, "[sdl-toaru] Need to implement: %u\n", (unsigned int)m->type);
 				break;
