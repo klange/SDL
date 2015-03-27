@@ -318,5 +318,8 @@ static void TOARU_SetCaption(_THIS, const char *title, const char *icon) {
 	}
 	this->hidden->title = strdup(title);
 	this->hidden->redraw_borders = 1;
+
+	yutani_window_advertise_icon(this->hidden->yctx, this->hidden->window, title, icon);
+	fprintf(stderr, "[sdl] icon name should be: '%s.png'\n", icon);
 }
 
