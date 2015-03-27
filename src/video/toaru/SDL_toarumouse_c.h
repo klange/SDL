@@ -24,3 +24,8 @@
 #include "SDL_toaruvideo.h"
 
 /* Functions to be exported */
+extern void TOARU_FreeWMCursor(_THIS, WMcursor *cursor);
+extern WMcursor *TOARU_CreateWMCursor(_THIS,
+		Uint8 *data, Uint8 *mask, int w, int h, int hot_x, int hot_y);
+extern void TOARU_MoveWMCursor(_THIS, int x, int y);
+extern int TOARU_ShowWMCursor(_THIS, WMcursor *cursor);

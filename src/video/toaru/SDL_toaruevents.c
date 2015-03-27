@@ -79,7 +79,27 @@ void TOARU_PumpEvents(_THIS) {
 						SDL_PrivateQuit();
 						break;
 					}
-					/* TODO mouse events */
+
+					int i;
+					signed int x = me->new_x - this->hidden->o_w;
+					signed int y = me->new_y - this->hidden->o_h;
+
+#define CONVERT_MOUSE(i) (i == 0 ? 1 : (i == 1 ? 3 : (i == 2 ? 2 : 0)))
+
+					for (i = 0; i < 3; ++i) {
+						int was = mouse_state & (1 << i);
+						int is  = me->buttons & (1 << i);
+						if (is && (was != is)) {
+							SDL_PrivateMouseButton(SDL_PRESSED, CONVERT_MOUSE(i), x, y);
+						} else if ((was) && (was != is)) {
+							SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+						} else if (was != is) {
+							SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+						}
+					}
+					mouse_state = me->buttons;
+
+					SDL_PrivateMouseMotion(0, 0, x, y);
 				}
 				break;
 			case YUTANI_MSG_SESSION_END:

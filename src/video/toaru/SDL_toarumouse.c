@@ -31,3 +31,31 @@
 struct WMcursor {
 	int unused;
 };
+
+/* There isn't any implementation dependent data */
+void TOARU_FreeWMCursor(_THIS, WMcursor *cursor)
+{
+	return;
+}
+
+/* There isn't any implementation dependent data */
+WMcursor *TOARU_CreateWMCursor(_THIS,
+		Uint8 *data, Uint8 *mask, int w, int h, int hot_x, int hot_y)
+{
+	return((WMcursor *)0x01);
+}
+
+static void TOARU_MoveCursor(_THIS, SDL_Cursor *cursor, int x, int y)
+{
+	/* do nothing */
+}
+
+void TOARU_MoveWMCursor(_THIS, int x, int y)
+{
+	/* do nothing */
+}
+
+int TOARU_ShowWMCursor(_THIS, WMcursor *wmcursor)
+{
+	return (1);
+}
