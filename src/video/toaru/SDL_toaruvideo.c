@@ -128,10 +128,11 @@ static SDL_VideoDevice *TOARU_CreateDevice(int devindex)
 	device->FreeWMCursor = TOARU_FreeWMCursor;
 	device->CreateWMCursor = TOARU_CreateWMCursor;
 	device->ShowWMCursor = TOARU_ShowWMCursor;
-	device->MoveWMCursor = TOARU_MoveWMCursor;
+	device->WarpWMCursor = TOARU_WarpWMCursor;
 	device->InitOSKeymap = TOARU_InitOSKeymap;
 	device->PumpEvents = TOARU_PumpEvents;
 	device->SetCaption = TOARU_SetCaption;
+	device->CheckMouseMode = TOARU_CheckMouseMode;
 
 	device->free = TOARU_DeleteDevice;
 

@@ -25,6 +25,9 @@
 #include "../../events/SDL_events_c.h"
 
 #include "SDL_toarumouse_c.h"
+#include "../SDL_cursor_c.h"
+
+#include <toaru/yutani.h>
 
 
 /* The implementation dependent data for the window manager cursor */
@@ -45,17 +48,24 @@ WMcursor *TOARU_CreateWMCursor(_THIS,
 	return((WMcursor *)0x01);
 }
 
-static void TOARU_MoveCursor(_THIS, SDL_Cursor *cursor, int x, int y)
-{
-	/* do nothing */
-}
-
 void TOARU_MoveWMCursor(_THIS, int x, int y)
 {
 	/* do nothing */
 }
 
+void TOARU_WarpWMCursor(_THIS, Uint16 x, Uint16 y) {
+	yutani_window_warp_mouse(this->hidden->yctx, this->hidden->window, x + this->hidden->o_w, y + this->hidden->o_h);
+}
+
 int TOARU_ShowWMCursor(_THIS, WMcursor *wmcursor)
 {
 	return (1);
+}
+
+void TOARU_CheckMouseMode(_THIS) {
+	int showing;
+
+	showing = (SDL_cursorstate & CURSOR_VISIBLE);
+
+	yutani_window_show_mouse(this->hidden->yctx, this->hidden->window, showing);
 }

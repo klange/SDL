@@ -193,6 +193,8 @@ void TOARU_PumpEvents(_THIS) {
 			case YUTANI_MSG_SESSION_END:
 				fprintf(stderr, "[sdl-toaru] Need to implement: %u\n", (unsigned int)m->type);
 				break;
+			case YUTANI_MSG_WINDOW_MOVE:
+				break;
 			default:
 				fprintf(stderr, "[sdl-toaru] Unhandled message from Yutani server: type=0x%x\n", (unsigned int)m->type);
 				break;
