@@ -31,6 +31,7 @@
 #include <toaru/yutani.h>
 #include <toaru/decorations.h>
 #include <toaru/kbd.h>
+#include <toaru/menu.h>
 
 //static SDLKey keymap[256];
 //static SDLMod modstate = KMOD_NONE;
@@ -58,6 +59,10 @@ void TOARU_PumpEvents(_THIS) {
 		m = yutani_poll_async(this->hidden->yctx);
 
 		if (!m) break;
+
+		if (menu_process_event(this->hidden->yctx, m)) {
+			this->hidden->redraw_borders = 1;
+		}
 
 		switch (m->type) {
 			case YUTANI_MSG_KEY_EVENT:
@@ -171,35 +176,48 @@ void TOARU_PumpEvents(_THIS) {
 			case YUTANI_MSG_WINDOW_MOUSE_EVENT:
 				{
 					struct yutani_msg_window_mouse_event * me = (void*)m->data;
-					if (this->hidden->bordered && decor_handle_event(this->hidden->yctx, m) == DECOR_CLOSE) {
-						SDL_PrivateQuit();
-						break;
-					}
+					yutani_window_t * win = hashmap_get(this->hidden->yctx->windows, (void*)me->wid);
+					if (win == this->hidden->window) {
+						if (this->hidden->bordered) {
+							int result = decor_handle_event(this->hidden->yctx, m);
+							switch (result) {
+								case DECOR_CLOSE:
+									SDL_PrivateQuit();
+									break;
+								case DECOR_RIGHT:
+									decor_show_default_menu(win, win->x + me->new_x, win->y +  me->new_y);
+									break;
+							}
+						}
 
-					int i;
-					signed int x = me->new_x - this->hidden->o_w;
-					signed int y = me->new_y - this->hidden->o_h;
+						int i;
+						signed int x = me->new_x - this->hidden->o_w;
+						signed int y = me->new_y - this->hidden->o_h;
 
 #define CONVERT_MOUSE(i) (i == 0 ? 1 : (i == 1 ? 3 : (i == 2 ? 2 : 0)))
 
-					for (i = 0; i < 3; ++i) {
-						int was = mouse_state & (1 << i);
-						int is  = me->buttons & (1 << i);
-						if (is && (was != is)) {
-							SDL_PrivateMouseButton(SDL_PRESSED, CONVERT_MOUSE(i), x, y);
-						} else if ((was) && (was != is)) {
-							SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
-						} else if (was != is) {
-							SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+						for (i = 0; i < 3; ++i) {
+							int was = mouse_state & (1 << i);
+							int is  = me->buttons & (1 << i);
+							if (is && (was != is)) {
+								SDL_PrivateMouseButton(SDL_PRESSED, CONVERT_MOUSE(i), x, y);
+							} else if ((was) && (was != is)) {
+								SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+							} else if (was != is) {
+								SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+							}
 						}
-					}
-					mouse_state = me->buttons;
+						mouse_state = me->buttons;
 
-					SDL_PrivateMouseMotion(0, 0, x, y);
+						SDL_PrivateMouseMotion(0, 0, x, y);
+					} else {
+
+					}
 				}
 				break;
+			case YUTANI_MSG_WINDOW_CLOSE:
 			case YUTANI_MSG_SESSION_END:
-				fprintf(stderr, "[sdl-toaru] Need to implement: %u\n", (unsigned int)m->type);
+				SDL_PrivateQuit();
 				break;
 			case YUTANI_MSG_WINDOW_MOVE:
 				break;

@@ -49,6 +49,7 @@
 #include <toaru/yutani.h>
 #include <toaru/graphics.h>
 #include <toaru/decorations.h>
+#include <toaru/menu.h>
 
 #define TOARUVID_DRIVER_NAME "toaru"
 
@@ -234,6 +235,8 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		fprintf(stderr, "Initializing window %dx%d (%d bpp)\n", width, height, bpp);
 
 		yutani_window_t * win = yutani_window_create(this->hidden->yctx, width + this->hidden->x_w, height + this->hidden->x_h);
+
+		yutani_window_move(this->hidden->yctx, win, 120, 120); /* Probably not ideal */
 
 		gfx_context_t * ctx = init_graphics_yutani_double_buffer(win);
 		this->hidden->window = (void *)win;
