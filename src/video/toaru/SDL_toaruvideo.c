@@ -166,6 +166,7 @@ SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
 SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 				int width, int height, int bpp, Uint32 flags)
 {
+
 	if ( this->hidden->window) {
 		fprintf(stderr, "Resize request to %d x %d.\n", width, height);
 
@@ -189,11 +190,24 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		fprintf(stderr, "Reinitializing graphics context...\n");
 		reinit_graphics_yutani(this->hidden->ctx, this->hidden->window);
 
-		if (this->hidden->bordered) {
-			this->hidden->buffer = realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
-			this->hidden->redraw_borders = 1;
-		}
 		yutani_window_resize_done(this->hidden->yctx, this->hidden->window);
+
+		if (this->hidden->bordered) {
+			yutani_window_t * w = (yutani_window_t *) this->hidden->window;
+			struct decor_bounds bounds;
+			decor_get_bounds(this->hidden->window, &bounds);
+			this->hidden->x_h = bounds.height;
+			this->hidden->x_w = bounds.width;
+			this->hidden->o_h = bounds.top_height;
+			this->hidden->o_w = bounds.left_width;
+			width = w->width - this->hidden->x_w;
+			height = w->height - this->hidden->x_h;
+			fprintf(stderr, "bordered, so need to adjust to new width/height %d x %d (%d %d)\n", width, height, this->hidden->x_w, this->hidden->x_h);
+			this->hidden->redraw_borders = 1;
+			this->hidden->buffer = ((gfx_context_t *)this->hidden->ctx)->backbuffer + \
+				(this->hidden->o_h * w->width + this->hidden->o_w) * 4;
+				//this->hidden->//realloc(this->hidden->buffer, sizeof(uint32_t) * width * height);
+		}
 	} else {
 
 		if (flags & SDL_NOFRAME) {
@@ -206,10 +220,12 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		} else {
 			fprintf(stderr, "Initializing with borders.\n");
 			this->hidden->bordered = 1;
-			this->hidden->x_h = decor_height();
-			this->hidden->x_w = decor_width();
-			this->hidden->o_h = decor_top_height;
-			this->hidden->o_w = decor_left_width;
+			struct decor_bounds bounds;
+			decor_get_bounds(this->hidden->window, &bounds);
+			this->hidden->x_h = bounds.height;
+			this->hidden->x_w = bounds.width;
+			this->hidden->o_h = bounds.top_height;
+			this->hidden->o_w = bounds.left_width;
 			this->hidden->redraw_borders = 1;
 		}
 
@@ -222,7 +238,8 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		this->hidden->ctx    = (void *)ctx;
 
 		if (this->hidden->bordered) {
-			this->hidden->buffer = malloc(sizeof(uint32_t) * width * height);
+			this->hidden->buffer = ((gfx_context_t *)this->hidden->ctx)->backbuffer + \
+				(this->hidden->o_h * win->width + this->hidden->o_w) * 4;
 		} else {
 			this->hidden->buffer = ((gfx_context_t *)this->hidden->ctx)->backbuffer;
 		}
@@ -231,11 +248,12 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 		fprintf(stderr, "Window output initialized...\n");
 	}
 
+	yutani_window_t * w = (yutani_window_t *) this->hidden->window;
 	/* Set up the new mode framebuffer */
 	current->flags = flags;
 	this->hidden->w = current->w = width;
 	this->hidden->h = current->h = height;
-	current->pitch = current->w * (4);
+	current->pitch = w->width * (4);
 	current->pixels = this->hidden->buffer;
 
 	/* We're done */
@@ -270,6 +288,7 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 
 	int y = 0;
 	int x = 0;
+#if 0
 	if (this->hidden->bordered) {
 		gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
 		if (this->hidden->redraw_borders) {
@@ -287,9 +306,22 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 			}
 		}
 	} else {
+#else
+	if (1) {
+#endif
 		gfx_context_t * ctx = (gfx_context_t *)this->hidden->ctx;
-		for (y = 0; y < ctx->height; ++y) {
-			for (x = 0; x < ctx->width; ++x) {
+		if (this->hidden->bordered) {
+			if (this->hidden->redraw_borders) {
+				if (this->hidden->title) {
+					render_decorations(this->hidden->window, this->hidden->ctx, this->hidden->title);
+				} else {
+					render_decorations(this->hidden->window, this->hidden->ctx, "[SDL App]");
+				}
+				this->hidden->redraw_borders = 0;
+			}
+		}
+		for (y = this->hidden->o_h; y < this->hidden->o_h + this->hidden->h; ++y) {
+			for (x = this->hidden->o_w; x < this->hidden->o_w + this->hidden->w; ++x) {
 				GFX(ctx, x, y) = GFX(ctx,x,y) | 0xFF000000;
 			}
 		}

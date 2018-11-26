@@ -9488,6 +9488,15 @@ beos*)
   shlibpath_var=LIBRARY_PATH
   ;;
 
+toaru*)
+ library_names_spec='${libname}${release}${shared_ext}'
+ soname_spec='${libname}${release}${shared_ext}'
+ dynamic_linker="$host_os ld.so"
+ shlibpath_var=LD_LIBRARY_PATH
+ deplibs_check_method=pass_all
+ ;;
+
+
 bsdi[45]*)
   version_type=linux
   need_version=no
@@ -21696,7 +21705,7 @@ case "$host" in
             $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
 
             SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
-	    SDL_LIBS="$SDL_LIBS -ltoaru -lpng15 -lz -lm -lfreetype"
+	    SDL_LIBS="$SDL_LIBS -ltoaru_decorations -ltoaru_menu -ltoaru_sdf -ltoaru_yutani -ltoaru_graphics"
         ;;
     *-*-cygwin* | *-*-mingw32*)
         ARCH=win32
