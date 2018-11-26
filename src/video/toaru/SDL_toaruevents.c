@@ -32,8 +32,8 @@
 #include <toaru/decorations.h>
 #include <toaru/kbd.h>
 
-static SDLKey keymap[256];
-static SDLMod modstate = KMOD_NONE;
+//static SDLKey keymap[256];
+//static SDLMod modstate = KMOD_NONE;
 
 int mouse_state = 0;
 
@@ -131,7 +131,7 @@ void TOARU_PumpEvents(_THIS) {
 								SDL_PrivateKeyboard(action, &keysym);
 								break;
 							default:
-								fprintf(stderr, "[SDL] Key press: %d ('%c')\n", ke->event.keycode, ke->event.key);
+								//fprintf(stderr, "[SDL] Key press: %d ('%c')\n", ke->event.keycode, ke->event.key);
 								break;
 						}
 					}
@@ -155,6 +155,14 @@ void TOARU_PumpEvents(_THIS) {
 					if (w == this->hidden->window) {
 						if (this->hidden->triggered_resize != 2) {
 							this->hidden->triggered_resize = 1;
+							if (this->hidden->bordered) {
+								struct decor_bounds bounds;
+								decor_get_bounds(this->hidden->window, &bounds);
+								this->hidden->x_h = bounds.height;
+								this->hidden->x_w = bounds.width;
+								this->hidden->o_h = bounds.top_height;
+								this->hidden->o_w = bounds.left_width;
+							}
 							SDL_PrivateResize(wr->width - this->hidden->x_w, wr->height - this->hidden->x_h);
 						}
 					}

@@ -149,6 +149,7 @@ int TOARU_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
 	vformat->BitsPerPixel = 32;
 	vformat->BytesPerPixel = 4;
+	vformat->Amask = 0xFF000000;
 
 	this->hidden->yctx = yutani_init();
 	init_decorations();
@@ -166,7 +167,8 @@ SDL_Rect **TOARU_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
 SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 				int width, int height, int bpp, Uint32 flags)
 {
-
+	int _width = width;
+	int _height = height;
 	if ( this->hidden->window) {
 		fprintf(stderr, "Resize request to %d x %d.\n", width, height);
 
@@ -202,7 +204,7 @@ SDL_Surface *TOARU_SetVideoMode(_THIS, SDL_Surface *current,
 			this->hidden->o_w = bounds.left_width;
 			width = w->width - this->hidden->x_w;
 			height = w->height - this->hidden->x_h;
-			fprintf(stderr, "bordered, so need to adjust to new width/height %d x %d (%d %d)\n", width, height, this->hidden->x_w, this->hidden->x_h);
+			fprintf(stderr, "bordered, so need to adjust to new width/height %d x %d (%d %d) from original size of %d x %d\n", width, height, this->hidden->x_w, this->hidden->x_h, _width, _height);
 			this->hidden->redraw_borders = 1;
 			this->hidden->buffer = ((gfx_context_t *)this->hidden->ctx)->backbuffer + \
 				(this->hidden->o_h * w->width + this->hidden->o_w) * 4;
@@ -320,11 +322,14 @@ static void TOARU_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
 				this->hidden->redraw_borders = 0;
 			}
 		}
+#if 1
+		/* TODO */
 		for (y = this->hidden->o_h; y < this->hidden->o_h + this->hidden->h; ++y) {
 			for (x = this->hidden->o_w; x < this->hidden->o_w + this->hidden->w; ++x) {
 				GFX(ctx, x, y) = GFX(ctx,x,y) | 0xFF000000;
 			}
 		}
+#endif
 		flip(this->hidden->ctx);
 	}
 	yutani_flip(this->hidden->yctx, this->hidden->window);
