@@ -8876,6 +8876,9 @@ rm -f core conftest.err conftest.$ac_objext \
       hardcode_shlibpath_var=no
       ;;
 
+    toaru*)
+     ;;
+
     *nto* | *qnx*)
       ;;
 
@@ -9489,12 +9492,12 @@ beos*)
   ;;
 
 toaru*)
- library_names_spec='${libname}${release}${shared_ext}'
- soname_spec='${libname}${release}${shared_ext}'
- dynamic_linker="$host_os ld.so"
- shlibpath_var=LD_LIBRARY_PATH
- deplibs_check_method=pass_all
- ;;
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  dynamic_linker="$host_os ld.so"
+  shlibpath_var=LD_LIBRARY_PATH
+  deplibs_check_method=pass_all
+  ;;
 
 
 bsdi[45]*)
@@ -14843,6 +14846,14 @@ osf3* | osf4* | osf5*)
 
 rdos*)
   dynamic_linker=no
+  ;;
+
+toaru*)
+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
+  soname_spec='${libname}${release}${shared_ext}$major'
+  dynamic_linker="$host_os ld.so"
+  shlibpath_var=LD_LIBRARY_PATH
+  deplibs_check_method=pass_all
   ;;
 
 solaris*)
@@ -21699,13 +21710,13 @@ case "$host" in
         fi
         ;;
     *-*-toaru*)
-            ARCH=toaru
-            CheckDummyVideo
-            CheckDummyAudio
-            $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
+        ARCH=toaru
+        CheckDummyVideo
+        CheckDummyAudio
+        $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
 
-            SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
-	    SDL_LIBS="$SDL_LIBS -ltoaru_decorations -ltoaru_menu -ltoaru_sdf -ltoaru_yutani -ltoaru_graphics"
+        SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLGAGS -ltoaru_decorations -ltoaru_menu -ltoaru_sdf -ltoaru_yutani -ltoaru_graphics"
         ;;
     *-*-cygwin* | *-*-mingw32*)
         ARCH=win32
