@@ -145,7 +145,7 @@ void TOARU_PumpEvents(_THIS) {
 			case YUTANI_MSG_WINDOW_FOCUS_CHANGE:
 				{
 					struct yutani_msg_window_focus_change * fc = (void*)m->data;
-					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)fc->wid);
+					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)(uintptr_t)fc->wid);
 					if (w == this->hidden->window) {
 						w->focused = fc->focused;
 						this->hidden->redraw_borders = 1;
@@ -156,7 +156,7 @@ void TOARU_PumpEvents(_THIS) {
 			case YUTANI_MSG_RESIZE_OFFER:
 				{
 					struct yutani_msg_window_resize * wr = (void*)m->data;
-					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)wr->wid);
+					yutani_window_t * w = hashmap_get(this->hidden->yctx->windows, (void*)(uintptr_t)wr->wid);
 					if (w == this->hidden->window) {
 						if (this->hidden->triggered_resize != 2) {
 							this->hidden->triggered_resize = 1;
@@ -176,7 +176,7 @@ void TOARU_PumpEvents(_THIS) {
 			case YUTANI_MSG_WINDOW_MOUSE_EVENT:
 				{
 					struct yutani_msg_window_mouse_event * me = (void*)m->data;
-					yutani_window_t * win = hashmap_get(this->hidden->yctx->windows, (void*)me->wid);
+					yutani_window_t * win = hashmap_get(this->hidden->yctx->windows, (void*)(uintptr_t)me->wid);
 					if (win == this->hidden->window) {
 						if (this->hidden->bordered) {
 							int result = decor_handle_event(this->hidden->yctx, m);
@@ -190,28 +190,23 @@ void TOARU_PumpEvents(_THIS) {
 							}
 						}
 
-						int i;
-						signed int x = me->new_x - this->hidden->o_w;
-						signed int y = me->new_y - this->hidden->o_h;
+						int x = me->new_x - this->hidden->o_w;
+						int y = me->new_y - this->hidden->o_h;
 
 #define CONVERT_MOUSE(i) (i == 0 ? 1 : (i == 1 ? 3 : (i == 2 ? 2 : 0)))
 
-						for (i = 0; i < 3; ++i) {
-							int was = mouse_state & (1 << i);
-							int is  = me->buttons & (1 << i);
+						SDL_PrivateMouseMotion(0, 0, x, y);
+
+						for (int i = 0; i < 3; ++i) {
+							int was = !!(mouse_state & (1 << i));
+							int is  = !!(me->buttons & (1 << i));
 							if (is && (was != is)) {
-								SDL_PrivateMouseButton(SDL_PRESSED, CONVERT_MOUSE(i), x, y);
-							} else if ((was) && (was != is)) {
-								SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
-							} else if (was != is) {
-								SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), x, y);
+								SDL_PrivateMouseButton(SDL_PRESSED, CONVERT_MOUSE(i), 0, 0);
+							} else if (was && (was != is)) {
+								SDL_PrivateMouseButton(SDL_RELEASED, CONVERT_MOUSE(i), 0, 0);
 							}
 						}
 						mouse_state = me->buttons;
-
-						SDL_PrivateMouseMotion(0, 0, x, y);
-					} else {
-
 					}
 				}
 				break;
