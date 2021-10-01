@@ -21713,10 +21713,12 @@ case "$host" in
         ARCH=toaru
         CheckDummyVideo
         CheckDummyAudio
-        $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
+        $as_echo "#define SDL_AUDIO_DRIVER_TOARU 1" >>confdefs.h
+        SOURCES="$SOURCES $srcdir/src/audio/toaru/*.c"
 
+        $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
         SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
-        EXTRA_LDFLAGS="$EXTRA_LDFLGAGS -ltoaru_decorations -ltoaru_menu -ltoaru_sdf -ltoaru_yutani -ltoaru_graphics"
+        EXTRA_LDFLAGS="$EXTRA_LDFLGAGS -ltoaru_decorations -ltoaru_menu -ltoaru_yutani -ltoaru_graphics"
         ;;
     *-*-cygwin* | *-*-mingw32*)
         ARCH=win32

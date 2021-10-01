@@ -49,6 +49,9 @@ static AudioBootStrap *bootstrap[] = {
 	&DSP_bootstrap,
 	&DMA_bootstrap,
 #endif
+#if SDL_AUDIO_DRIVER_TOARU
+	&TOARU_audiobootstrap
+#endif
 #if SDL_AUDIO_DRIVER_QNXNTO
 	&QNXNTOAUDIO_bootstrap,
 #endif

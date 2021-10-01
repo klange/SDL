@@ -115,6 +115,9 @@ extern AudioBootStrap ALSA_bootstrap;
 extern AudioBootStrap DSP_bootstrap;
 extern AudioBootStrap DMA_bootstrap;
 #endif
+#if SDL_AUDIO_DRIVER_TOARU
+extern AudioBootStrap TOARU_audiobootstrap;
+#endif
 #if SDL_AUDIO_DRIVER_QNXNTO
 extern AudioBootStrap QNXNTOAUDIO_bootstrap;
 #endif
