@@ -21718,7 +21718,14 @@ case "$host" in
 
         $as_echo "#define SDL_VIDEO_DRIVER_TOARU 1" >>confdefs.h
         SOURCES="$SOURCES $srcdir/src/video/toaru/*.c"
-        EXTRA_LDFLAGS="$EXTRA_LDFLGAGS -ltoaru_decorations -ltoaru_menu -ltoaru_yutani -ltoaru_graphics"
+
+        if test x$enable_timers = xyes; then
+            $as_echo "#define SDL_TIMER_UNIX 1" >>confdefs.h
+            SOURCES="$SOURCES $srcdir/src/timer/unix/*.c"
+            have_timers=yes
+        fi
+
+        EXTRA_LDFLAGS="$EXTRA_LDFLGAGS -ltoaru_decorations -ltoaru_menu -ltoaru_yutani -ltoaru_graphics -ltoaru_hashmap"
         ;;
     *-*-cygwin* | *-*-mingw32*)
         ARCH=win32
