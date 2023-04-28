@@ -46,7 +46,7 @@
 #include <pth.h>
 #endif
 
-#if SDL_THREADS_DISABLED
+#if SDL_THREADS_DISABLED && !defined(toaru)
 #define USE_ITIMER
 #endif
 
@@ -87,6 +87,7 @@ Uint32 SDL_GetTicks (void)
 
 void SDL_Delay (Uint32 ms)
 {
+#ifndef toaru
 #if SDL_THREAD_PTH
 	pth_time_t tv;
 	tv.tv_sec  =  ms/1000;
@@ -132,6 +133,9 @@ void SDL_Delay (Uint32 ms)
 #endif /* HAVE_NANOSLEEP */
 	} while ( was_error && (errno == EINTR) );
 #endif /* SDL_THREAD_PTH */
+#else
+	usleep(ms*1000);
+#endif /* toaru*/
 }
 
 #ifdef USE_ITIMER
